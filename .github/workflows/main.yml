@@ -1,6 +1,7 @@
 name: Release Workflow
 
-on: push
+on: 
+  workflow_dispatch
 
 concurrency:
   group: release_workflow
@@ -10,6 +11,8 @@ jobs:
   build_windows:
     runs-on: windows-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Build FluffyChat
         run: |
               choco install flutter -y --no-progress
@@ -37,13 +40,9 @@ jobs:
       - name: Add olm to Build
         run: copy .\olm-master\build\Debug\olm.dll .\fluffychat-1.13.0\build\windows\runner\Release\libolm.dll
       - name: Create archive
-        run: 7z a fluffychat-windows-x64.zip .\fluffychat-1.13.0\build\windows\runner\Release\
+        run: 7z a fluffychat-windows-x64-1.13.0.zip .\fluffychat-1.13.0\build\windows\runner\Release\
       - name: Upload to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        uses: sotfprops/action-gh-release@v1
+        if: startsWith(github.ref,'refs/tags/')
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: fluffychat-windows-x64.zip
-          asset_name: fluffychat-windows-x64.zip
-          asset_content_type: application/zip
+          files: fluffychat-windows-x64-1.13.0.zip
