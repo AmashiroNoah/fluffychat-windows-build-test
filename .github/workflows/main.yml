@@ -35,7 +35,7 @@ jobs:
               cmake . -Bbuild -DCMAKE_TOOLCHAIN_FILE="Windows64.cmake"
               cmake --build build
       - name: Add olm to Build
-        run: copy .\fluffychat-1.13.0\olm-master\build\Debug\olm.dll .\fluffychat-1.13.0\build\windows\runner\Release\libolm.dll
+        run: copy .\olm-master\build\Debug\olm.dll .\fluffychat-1.13.0\build\windows\runner\Release\libolm.dll
       - name: Create archive
         run: 7z a fluffychat-windows-x64.zip .\fluffychat-1.13.0\build\windows\runner\Release\
       - name: Upload to release
