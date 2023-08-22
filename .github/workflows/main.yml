@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Build FluffyChat
         run: |
-              choco install flutter -y
+              choco install flutter -y --no-progress
               Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
               refreshenv
               flutter config --no-analytics
@@ -26,7 +26,7 @@ jobs:
               flutter build windows --release -v
       - name: Build olm
         run: |
-              choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+              choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y --no-progress
               Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
               refreshenv
               Invoke-WebRequest -Uri https://gitlab.matrix.org/matrix-org/olm/-/archive/master/olm-master.zip -OutFile olm.zip
@@ -34,10 +34,8 @@ jobs:
               cd .\olm-master
               cmake . -Bbuild -DCMAKE_TOOLCHAIN_FILE="Windows64.cmake"
               cmake --build build
-              cd .\build\Debug
-              mv .\olm.dll libolm.dll
       - name: Add olm to Build
-        run: cp .\fluffychat-1.13.0\olm-master\build\Debug\libolm.dll .\fluffychat-1.13.0\build\windows\runner\Release\
+        run: copy .\fluffychat-1.13.0\olm-master\build\Debug\olm.dll .\fluffychat-1.13.0\build\windows\runner\Release\libolm.dll
       - name: Create archive
         run: 7z a fluffychat-windows-x64.zip .\fluffychat-1.13.0\build\windows\runner\Release\
       - name: Upload to release
