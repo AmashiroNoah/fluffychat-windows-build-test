@@ -1,0 +1,51 @@
+name: Release Workflow
+
+on: push
+
+concurrency:
+  group: release_workflow
+  cancel-in-progress: true
+
+jobs:
+  build_windows:
+    runs-on: windows-latest
+    steps:
+      - name: Build FluffyChat
+        run: |
+              choco install flutter -y
+              Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+              refreshenv
+              flutter config --no-analytics
+              Invoke-WebRequest -Uri https://github.com/krille-chan/fluffychat/archive/refs/tags/v1.13.0.zip -OutFile src.zip
+              7z x src.zip
+              cd .\fluffychat-1.13.0\
+              flutter doctor
+              flutter config --enable-windows-desktop
+              flutter clean
+              flutter pub get
+              flutter build windows --release -v
+      - name: Build olm
+        run: |
+              choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+              Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+              refreshenv
+              Invoke-WebRequest -Uri https://gitlab.matrix.org/matrix-org/olm/-/archive/master/olm-master.zip -OutFile olm.zip
+              7z x olm.zip
+              cd .\olm-master
+              cmake . -Bbuild -DCMAKE_TOOLCHAIN_FILE="Windows64.cmake"
+              cmake --build build
+              cd .\build\Debug
+              mv .\olm.dll libolm.dll
+      - name: Add olm to Build
+        run: cp .\fluffychat-1.13.0\olm-master\build\Debug\libolm.dll .\fluffychat-1.13.0\build\windows\runner\Release\
+      - name: Create archive
+        run: 7z a fluffychat-windows-x64.zip .\fluffychat-1.13.0\build\windows\runner\Release\
+      - name: Upload to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: fluffychat-windows-x64.zip
+          asset_name: fluffychat-windows-x64.zip
+          asset_content_type: application/zip
